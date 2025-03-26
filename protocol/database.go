@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/henrycg/simplepir/lwe"
 	"github.com/henrycg/simplepir/matrix"
@@ -57,7 +59,23 @@ func LoadVectorsFromCSV(path string) ([][]uint64, error) {
 }
 
 // BuildVectorDatabase creates a PIR database from CSV vector files
-func BuildVectorDatabase(clusterFiles []string, vectorDim uint64, seed *rand.PRGKey, hintSz uint64) (*pir.Database[matrix.Elem64], ClusterMap, error) {
+func BuildVectorDatabase(clusterPreamble string, vectorDim uint64, seed *rand.PRGKey, hintSz uint64) (*pir.Database[matrix.Elem64], ClusterMap, error) {
+	dir := filepath.Dir(clusterPreamble)
+	prefix := filepath.Base(clusterPreamble)
+
+	// Find all files in directory that match the prefix and have .csv extension
+	dirEntries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read directory %s: %v", dir, err)
+	}
+
+	var clusterFiles []string
+	for _, entry := range dirEntries {
+		if !entry.IsDir() && strings.HasPrefix(entry.Name(), prefix) && strings.HasSuffix(entry.Name(), ".csv") {
+			clusterFiles = append(clusterFiles, filepath.Join(dir, entry.Name()))
+		}
+	}
+
 	// Count clusters
 	clusterCount := uint64(len(clusterFiles))
 	if clusterCount == 0 {
