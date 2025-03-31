@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/DeweiFeng/6.5610-project/protocol/utils"
+	"github.com/DeweiFeng/6.5610-project/search/utils"
 	"github.com/henrycg/simplepir/lwe"
 	"github.com/henrycg/simplepir/matrix"
 	"github.com/henrycg/simplepir/pir"
