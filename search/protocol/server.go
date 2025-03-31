@@ -46,10 +46,15 @@ func (s *Server) ProcessVectorsFromClusters(metadata database.Metadata, clusters
 
 	// THIS CHECK DOES NOT MAKE SENSE FOR IMAGE DATASET, BECAUSE VECTORS ARE NORMALIZED
 	max_inner_prod := 2 * (1 << (2*precBits - 2)) * dim
-	if (s.PIRServer.Params().P < max_inner_prod) {
+	if s.PIRServer.Params().P < max_inner_prod {
 		fmt.Printf("%d < %d\n", s.PIRServer.Params().P, max_inner_prod)
 		panic("Parameters not supported. Inner products may wrap around.")
 	}
 
 	fmt.Println("    done")
+}
+
+func (s *Server) Answer(query *pir.Query[matrix.Elem64], ans *pir.Answer[matrix.Elem64]) error {
+	*ans = *s.PIRServer.Answer(query)
+	return nil
 }
