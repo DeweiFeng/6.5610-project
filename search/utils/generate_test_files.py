@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -47,5 +48,13 @@ def generate_test_files(num_vectors, dim, num_clusters, preamble, precision=5):
         f.write(f'  "prec_bits": {precision}\n')
         f.write("}\n")
 
+# if __name__ == "__main__":
+#     generate_test_files(100, 10, 5, "./test_data/test")
+
+# four arguments from command line
 if __name__ == "__main__":
-    generate_test_files(100, 10, 5, "./test_data/test")
+    num_vectors = int(sys.argv[1])
+    dim = int(sys.argv[2])
+    num_clusters = int(sys.argv[3])
+    preamble = sys.argv[4]
+    generate_test_files(num_vectors, dim, num_clusters, preamble)

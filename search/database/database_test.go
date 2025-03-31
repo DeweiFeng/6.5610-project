@@ -2,45 +2,16 @@ package database
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 	"testing"
 
+	"github.com/DeweiFeng/6.5610-project/search/utils"
 	"github.com/henrycg/simplepir/rand"
 )
 
-func GenerateTestData() {
-	// call generate_test_files.py to generate test files
-
-	python_path := "../../.venv/bin/python3"
-	script_path := "./generate_test_files.py"
-	// create a folder ./test_data
-	err := os.MkdirAll("./test_data", os.ModePerm)
-	if err != nil {
-		panic("Error creating test folder:" + err.Error())
-	}
-	cmd := exec.Command(python_path, script_path)
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if err != nil {
-		panic("Error generating test files:" + err.Error())
-	}
-}
-
-func RemoveTestData() {
-	// remove folder ./test_data
-	err := os.RemoveAll("./test_data")
-	if err != nil {
-		panic("Error removing test files:" + err.Error())
-	}
-}
-
 func TestReadEmbeddingsCsv(t *testing.T) {
-	GenerateTestData()
+	preamble := utils.GenerateTestData()
 	// Test the ReadEmbeddingsCsv function
-	cluster := ReadClusterFromCsv("./test_data/test_cluster_0.csv", 0)
+	cluster := ReadClusterFromCsv(preamble+"_cluster_0.csv", 0)
 
 	fmt.Println("Number of vectors:", cluster.NumVectors)
 	fmt.Println("Dimension:", cluster.Dim)
@@ -52,14 +23,13 @@ func TestReadEmbeddingsCsv(t *testing.T) {
 		}
 		fmt.Println()
 	}
-	RemoveTestData()
+	utils.RemoveTestData()
 }
 
-
 func TestReadAllClusters(t *testing.T) {
-	GenerateTestData()
+	preamble := utils.GenerateTestData()
 	// Test the ReadAllClusters function
-	metadata, clusters := ReadAllClusters("./test_data/test")
+	metadata, clusters := ReadAllClusters(preamble)
 
 	fmt.Println("Metadata:")
 	fmt.Println("Number of vectors:", metadata.NumVectors)
@@ -73,17 +43,17 @@ func TestReadAllClusters(t *testing.T) {
 		fmt.Println("Number of vectors:", cluster.NumVectors)
 		fmt.Println("Dimension:", cluster.Dim)
 	}
-	RemoveTestData()
+	utils.RemoveTestData()
 }
 
 func TestBuildVectorDatabase(t *testing.T) {
-	GenerateTestData()
+	preamble := utils.GenerateTestData()
 	// Test the BuildVectorDatabase function
-	metadata, clusters := ReadAllClusters("./test_data/test")
+	metadata, clusters := ReadAllClusters(preamble)
 	seed := rand.RandomPRGKey()
 
 	// Call BuildVectorDatabase with the clusters
 	// hintSz is 900 for text embeddings in Tiptoe, and 500 for image embeddings
 	_, _ = BuildVectorDatabase(metadata, clusters, seed, 900)
-	RemoveTestData()
+	utils.RemoveTestData()
 }
