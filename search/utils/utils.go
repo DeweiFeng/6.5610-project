@@ -4,7 +4,19 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"github.com/henrycg/simplepir/matrix"
+	"github.com/henrycg/simplepir/pir"
+	"github.com/henrycg/simplepir/rand"
 )
+
+type PIR_hint[T matrix.Elem] struct {
+	Info pir.DBInfo
+	Hint matrix.Matrix[T]
+
+	Seeds   []rand.PRGKey
+	Offsets []uint64
+}
 
 func StringToUint(s string) (uint, error) {
 	i, err := strconv.Atoi(s)
