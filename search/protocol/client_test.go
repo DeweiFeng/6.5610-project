@@ -51,6 +51,11 @@ func TestZeroQuery(t *testing.T) {
 		}
 	}
 
+	// check if the length of scores is equal to the number of vectors in cluster[0]
+	if len(scores) != int(clusters[0].NumVectors) {
+		t.Errorf("Expected length of scores to be %d, but got %d", clusters[0].NumVectors, len(scores))
+	}
+
 	// print all scores one by one, in one line
 	print("Scores: ")
 	for i := 0; i < len(scores); i++ {
@@ -58,6 +63,19 @@ func TestZeroQuery(t *testing.T) {
 			print(scores[i])
 		} else {
 			print(scores[i], ", ")
+		}
+	}
+	// print a new line
+	println()
+
+	indices := utils.SortByScores(scores)
+	// print all indices one by one, in one line
+	print("Indices (of cluster %d): ", clusterIndex)
+	for i := 0; i < len(indices); i++ {
+		if i == len(indices)-1 {
+			print(indices[i])
+		} else {
+			print(indices[i], ", ")
 		}
 	}
 	// print a new line

@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 
 	"github.com/ahenzinger/underhood/underhood"
@@ -191,4 +192,29 @@ func SmoothResult(val uint64, mod uint64) int {
 	}
 
 	return int(val)
+}
+
+func SortByScores(scores []int) []uint64 {
+	score_to_index := make(map[int][]uint64)
+
+	for i, v := range scores {
+		if _, ok := score_to_index[v]; !ok {
+			score_to_index[v] = make([]uint64, 0)
+		}
+		score_to_index[v] = append(score_to_index[v], uint64(i))
+	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(scores)))
+
+	indices := make([]uint64, len(scores))
+	at := 0
+	for i, v := range scores {
+		if at >= len(score_to_index[v]) {
+			at = 0
+		}
+		indices[i] = score_to_index[v][at]
+		at += 1
+	}
+
+	return indices
 }
