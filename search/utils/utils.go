@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/ahenzinger/underhood/underhood"
 	"github.com/henrycg/simplepir/matrix"
 	"github.com/henrycg/simplepir/pir"
 	"github.com/henrycg/simplepir/rand"
@@ -147,3 +148,25 @@ func GetCallerDirectory() string {
 
 	return filepath.Dir(filename)
 }
+
+func NewUnderhoodClient[T matrix.Elem](h *PIR_hint[T]) *underhood.Client[T] {
+	return underhood.NewClientDistributed[T](h.Seeds, h.Offsets, &h.Info)
+}
+
+func FindDBEnd(indices map[uint64]bool, rowStart, colIndex, M, L, maxLen uint64) uint64 {
+	rowEnd := rowStart + 1
+	for length := uint64(1); ; length++ {
+	  if (maxLen > 0) && (length >= maxLen) {
+		break
+	  }
+	  if _, ok := indices[rowEnd * M + colIndex]; ok {
+		break
+	  }
+	  if rowEnd >= L {
+		break
+	  }
+	  rowEnd += 1
+	}
+  
+	return rowEnd
+  }
