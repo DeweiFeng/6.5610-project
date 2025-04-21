@@ -12,9 +12,9 @@ func TestProcessVectorsFromClusters(t *testing.T) {
 	// Test the BuildVectorDatabase function
 	metadata, clusters := database.ReadAllClusters(preamble)
 
-	hinSz := uint64(900) // hintSz is 900 for text embeddings in Tiptoe, and 500 for image embeddings
+	hintSz := uint64(900) // hintSz is 900 for text embeddings in Tiptoe, and 500 for image embeddings
 	// get an empty server
 	s := new(Server)
-	s.ProcessVectorsFromClusters(metadata, clusters, hinSz)
+	s.ProcessVectorsFromClusters(metadata, clusters, hintSz)
 	utils.RemoveTestData()
 }

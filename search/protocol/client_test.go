@@ -5,8 +5,6 @@ import (
 
 	"github.com/DeweiFeng/6.5610-project/search/database"
 	"github.com/DeweiFeng/6.5610-project/search/utils"
-	"github.com/henrycg/simplepir/matrix"
-	"github.com/henrycg/simplepir/pir"
 )
 
 func TestZeroQuery(t *testing.T) {
@@ -14,19 +12,17 @@ func TestZeroQuery(t *testing.T) {
 	// Test the BuildVectorDatabase function
 	metadata, clusters := database.ReadAllClusters(preamble)
 
-	hinSz := uint64(900) // hintSz is 900 for text embeddings in Tiptoe, and 500 for image embeddings
+	hintSz := uint64(900) // hintSz is 900 for text embeddings in Tiptoe, and 500 for image embeddings
 	// get an empty server
 	s := new(Server)
-	s.ProcessVectorsFromClusters(metadata, clusters, hinSz)
+	s.ProcessVectorsFromClusters(metadata, clusters, hintSz)
 
 	c := new(Client)
 	c.Setup(s.Hint) // get the hint from the server
 
-	hintServer := SetUpHintServer(s.Hint)
-
 	// from here, it is for each query
 	ct := c.PreprocessQuery()
-	offlineAns := hintServer.HintAnswer(ct)
+	offlineAns := s.HintAnswer(ct)
 	c.ProcessHintApply(offlineAns)
 
 	// get the query: a list of uint64 of zeros, size = dim
@@ -38,10 +34,9 @@ func TestZeroQuery(t *testing.T) {
 
 	query := c.QueryEmbeddings(zeroQuery, clusterIndex)
 
-	var ans pir.Answer[matrix.Elem64]
-	s.Answer(query, &ans)
+	ans := s.Answer(query)
 
-	dec := c.ReconstructEmbeddingsWithinCluster(&ans, clusterIndex)
+	dec := c.ReconstructEmbeddingsWithinCluster(ans, clusterIndex)
 	scores := utils.SmoothResults(dec, c.DBInfo.P())
 
 	// check if all scores are zero

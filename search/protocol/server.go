@@ -19,8 +19,9 @@ type TiptoeHint struct {
 }
 
 type Server struct {
-	Hint      *TiptoeHint
-	PIRServer *pir.Server[matrix.Elem64]
+	Hint       *TiptoeHint
+	PIRServer  *pir.Server[matrix.Elem64]
+	HintServer *underhood.Server[matrix.Elem64]
 }
 
 func (s *Server) ProcessVectorsFromClusters(metadata database.Metadata, clusters []*database.Cluster, hintSz uint64) {
@@ -45,6 +46,8 @@ func (s *Server) ProcessVectorsFromClusters(metadata database.Metadata, clusters
 	s.Hint.PIRHint.Offsets = []uint64{s.Hint.PIRHint.Info.M}
 	s.Hint.IndexMap = indexMap
 
+	s.HintServer = underhood.NewServerHintOnly(&s.Hint.PIRHint.Hint)
+
 	// THIS CHECK DOES NOT MAKE SENSE FOR IMAGE DATASET, BECAUSE VECTORS ARE NORMALIZED
 	max_inner_prod := 2 * (1 << (2*precBits - 2)) * dim
 	if s.PIRServer.Params().P < max_inner_prod {
@@ -55,15 +58,18 @@ func (s *Server) ProcessVectorsFromClusters(metadata database.Metadata, clusters
 	fmt.Println("    done")
 }
 
-func (s *Server) Answer(query *pir.Query[matrix.Elem64], ans *pir.Answer[matrix.Elem64]) error {
-	*ans = *s.PIRServer.Answer(query)
-	return nil
+// func (s *Server) Answer(query *pir.Query[matrix.Elem64], ans *pir.Answer[matrix.Elem64]) error {
+// 	*ans = *s.PIRServer.Answer(query)
+// 	return nil
+// }
+
+func (s *Server) HintAnswer(ct *[][]byte) *underhood.HintAnswer {
+	offlineAns := s.HintServer.HintAnswer(ct)
+	return offlineAns
 }
 
-func SetUpHintServer(h *TiptoeHint) *underhood.Server[matrix.Elem64] {
-	out := new(underhood.Server[matrix.Elem64])
-	if h.PIRHint.Hint.Cols() != 0 {
-		out = underhood.NewServerHintOnly(&h.PIRHint.Hint)
-	}
-	return out
+// return version of Answer (instead of writing to given ans)
+func (s *Server) Answer(query *pir.Query[matrix.Elem64]) *pir.Answer[matrix.Elem64] {
+	ans := s.PIRServer.Answer(query)
+	return ans
 }
