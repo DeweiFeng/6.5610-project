@@ -156,17 +156,39 @@ func NewUnderhoodClient[T matrix.Elem](h *PIR_hint[T]) *underhood.Client[T] {
 func FindDBEnd(indices map[uint64]bool, rowStart, colIndex, M, L, maxLen uint64) uint64 {
 	rowEnd := rowStart + 1
 	for length := uint64(1); ; length++ {
-	  if (maxLen > 0) && (length >= maxLen) {
-		break
-	  }
-	  if _, ok := indices[rowEnd * M + colIndex]; ok {
-		break
-	  }
-	  if rowEnd >= L {
-		break
-	  }
-	  rowEnd += 1
+		if (maxLen > 0) && (length >= maxLen) {
+			break
+		}
+		if _, ok := indices[rowEnd*M+colIndex]; ok {
+			break
+		}
+		if rowEnd >= L {
+			break
+		}
+		rowEnd += 1
 	}
-  
+
 	return rowEnd
-  }
+}
+
+func SmoothResults(vals []uint64, mod uint64) []int {
+	res := make([]int, len(vals))
+
+	for i := 0; i < len(vals); i++ {
+		res[i] = SmoothResult(vals[i], mod)
+	}
+
+	return res
+}
+
+func SmoothResult(val uint64, mod uint64) int {
+	if val > mod {
+		panic("Should not happen")
+	}
+
+	if val > mod/2 {
+		return int(val - mod)
+	}
+
+	return int(val)
+}

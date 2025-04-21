@@ -5,6 +5,7 @@ import (
 
 	"github.com/DeweiFeng/6.5610-project/search/database"
 	"github.com/DeweiFeng/6.5610-project/search/utils"
+	"github.com/ahenzinger/underhood/underhood"
 	"github.com/henrycg/simplepir/matrix"
 	"github.com/henrycg/simplepir/pir"
 	"github.com/henrycg/simplepir/rand"
@@ -57,4 +58,12 @@ func (s *Server) ProcessVectorsFromClusters(metadata database.Metadata, clusters
 func (s *Server) Answer(query *pir.Query[matrix.Elem64], ans *pir.Answer[matrix.Elem64]) error {
 	*ans = *s.PIRServer.Answer(query)
 	return nil
+}
+
+func SetUpHintServer(h *TiptoeHint) *underhood.Server[matrix.Elem64] {
+	out := new(underhood.Server[matrix.Elem64])
+	if h.PIRHint.Hint.Cols() != 0 {
+		out = underhood.NewServerHintOnly(&h.PIRHint.Hint)
+	}
+	return out
 }

@@ -50,6 +50,11 @@ func (c *Client) ProcessHintApply(ans *underhood.HintAnswer) {
 }
 
 func (c *Client) QueryEmbeddings(emb []int8, clusterIndex uint64) *pir.Query[matrix.Elem64] {
+	// check if the clusterIndex is valid
+	if clusterIndex >= uint64(len(c.IndexMap)) {
+		panic("Invalid cluster index")
+	}
+
 	dbIndex := c.IndexMap[uint(clusterIndex)]
 	m := c.DBInfo.M
 	dim := uint64(len(emb))
@@ -84,7 +89,7 @@ func (c *Client) ReconstructEmbeddingsWithinCluster(answer *pir.Answer[matrix.El
 	dbIndex := c.IndexMap[uint(clusterIndex)]
 	rowStart := dbIndex / c.DBInfo.M
 	colIndex := dbIndex % c.DBInfo.M
-	rowEnd := utils.FindDBEnd(c.Indices, rowStart, colIndex, c.DBInfo.M, c.DBInfo.L, 0) // TODO: fix this
+	rowEnd := utils.FindDBEnd(c.Indices, rowStart, colIndex, c.DBInfo.M, c.DBInfo.L, 0)
 
 	vals := c.UnderhoodClient.RecoverLHE(answer)
 
