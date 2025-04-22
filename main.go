@@ -22,13 +22,16 @@ func argumentsValidation(preamble string, topk int) {
 	}
 }
 
-func readQueryLine(reader *csv.Reader, dim uint64) (uint64, []int8, error) {
+func readQueryLine(reader *csv.Reader, dim uint64) (uint64, []int8, bool) {
 	row, err := reader.Read()
+	if err == io.EOF {
+		return 0, nil, true
+	}
 	if err != nil {
-		return 0, nil, err
+		panic("Error reading query line: " + err.Error())
 	}
 	if len(row) != int(dim)+1 {
-		return 0, nil, fmt.Errorf("expected %d columns, got %d", dim+1, len(row))
+		panic(fmt.Sprintf("Error: expected %d columns, got %d", dim+1, len(row)))
 	}
 	clusterIndex, err := utils.StringToUint64(row[0])
 	if err != nil {
@@ -41,14 +44,21 @@ func readQueryLine(reader *csv.Reader, dim uint64) (uint64, []int8, error) {
 			panic("Error converting query to int8: " + err.Error())
 		}
 	}
-	return clusterIndex, query, nil
+	return clusterIndex, query, false
 }
 
-func writeResults(writer *csv.Writer, clusterIndex uint64, indices []uint64) {
-	line := make([]string, len(indices)*2)
-	for i, index := range indices {
-		line[i*2] = fmt.Sprintf("%d", clusterIndex)
-		line[i*2+1] = fmt.Sprintf("%d", index)
+func writeResults(writer *csv.Writer, clusterIndex uint64, scores *[]protocol.VectorScore, topk int) {
+	if len(*scores) == 0 {
+		panic("Error: No scores to write")
+	}
+	numRes := topk
+	if numRes > len(*scores) {
+		numRes = len(*scores)
+	}
+	line := make([]string, numRes*2)
+	for i := 0; i < numRes; i++ {
+		line[i*2] = fmt.Sprintf("%d", (*scores)[i].ClusterID)
+		line[i*2+1] = fmt.Sprintf("%d", (*scores)[i].IDWithinCluster)
 	}
 	if err := writer.Write(line); err != nil {
 		panic("Error writing to output file: " + err.Error())
@@ -59,9 +69,14 @@ func writeResults(writer *csv.Writer, clusterIndex uint64, indices []uint64) {
 func main() {
 	preamble := flag.String("preamble", "", "Preamble to use for the search")
 	topk := flag.Int("topk", 10, "Number of top results to return")
+	clusterOnly := flag.Bool("clusterOnly", false, "Only return top k among vectors in the specified cluster")
 
 	flag.Parse()
 	argumentsValidation(*preamble, *topk)
+
+	fmt.Printf("Preamble: %s\n", *preamble)
+	fmt.Printf("Top K: %d\n", *topk)
+	fmt.Printf("Cluster Only: %t\n", *clusterOnly)
 
 	metadata, clusters := database.ReadAllClusters(*preamble)
 	hintSz := uint64(900)
@@ -79,7 +94,11 @@ func main() {
 
 	reader := csv.NewReader(queryFile)
 
-	outputFile, err := os.Create(filepath.Join(dir, prefix+"_results.csv"))
+	outputFileSuffix := "_results.csv"
+	if *clusterOnly {
+		outputFileSuffix = "_results_cluster_only.csv"
+	}
+	outputFile, err := os.Create(filepath.Join(dir, prefix+outputFileSuffix))
 	if err != nil {
 		panic("Error creating output file: " + err.Error())
 	}
@@ -88,35 +107,25 @@ func main() {
 	defer writer.Flush()
 
 	for {
-		ct := client.PreprocessQuery()
-		offlineAns := server.HintAnswer(ct)
-		client.ProcessHintApply(offlineAns)
-
-		clusterIndex, query, err := readQueryLine(reader, metadata.Dim)
-
-		if err == io.EOF {
+		clusterIndex, query, isEnd := readQueryLine(reader, metadata.Dim)
+		if isEnd {
 			break
 		}
-		if err != nil {
-			panic("Error reading query line: " + err.Error())
-		}
-
-		fmt.Printf("Processing query %v of cluster %d\n", query, clusterIndex)
-		indices := runRound(client, server, query, clusterIndex)
-		if len(indices) > *topk {
-			indices = indices[:*topk]
-		}
-		writeResults(writer, clusterIndex, indices)
+		sortedScores := runRound(client, server, query, clusterIndex, *clusterOnly)
+		writeResults(writer, clusterIndex, sortedScores, *topk)
 	}
 }
 
-func runRound(c *protocol.Client, s *protocol.Server, query []int8, clusterIndex uint64) []uint64 {
+func runRound(c *protocol.Client, s *protocol.Server, query []int8, clusterIndex uint64, clusterOnly bool) *[]protocol.VectorScore {
+	ct := c.PreprocessQuery()
+	offlineAns := s.HintAnswer(ct)
+	c.ProcessHintApply(offlineAns)
+
 	queryEmb := c.QueryEmbeddings(query, clusterIndex)
 	ans := s.Answer(queryEmb)
-
-	dec := c.ReconstructEmbeddingsWithinCluster(ans, clusterIndex)
-	scores := utils.SmoothResults(dec, c.DBInfo.P())
-
-	indices := utils.SortByScores(scores)
-	return indices
+	if clusterOnly {
+		return c.ReconstructWithinCluster(ans, clusterIndex, c.DBInfo.P())
+	} else {
+		return c.ReconstructWithinBin(ans, clusterIndex, c.DBInfo.P())
+	}
 }

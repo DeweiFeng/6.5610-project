@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/DeweiFeng/6.5610-project/search/database"
@@ -37,44 +36,19 @@ func TestZeroQuery(t *testing.T) {
 
 	ans := s.Answer(query)
 
-	dec := c.ReconstructEmbeddingsWithinCluster(ans, clusterIndex)
-	scores := utils.SmoothResults(dec, c.DBInfo.P())
+	scores := c.ReconstructWithinCluster(ans, clusterIndex, c.DBInfo.P())
 
 	// check if all scores are zero
-	for i := 0; i < len(scores); i++ {
-		if scores[i] != 0 {
-			t.Errorf("Expected score %d to be 0, but got %d", i, scores[i])
+	for i := 0; i < len(*scores); i++ {
+		if (*scores)[i].Score != 0 {
+			t.Errorf("Expected score %d to be 0, but got %d", i, (*scores)[i].Score)
 		}
 	}
 
 	// check if the length of scores is equal to the number of vectors in cluster[0]
-	if len(scores) != int(clusters[0].NumVectors) {
-		t.Errorf("Expected length of scores to be %d, but got %d", clusters[0].NumVectors, len(scores))
+	if len(*scores) != int(clusters[0].NumVectors) {
+		t.Errorf("Expected length of scores to be %d, but got %d", clusters[0].NumVectors, len(*scores))
 	}
-
-	// print all scores one by one, in one line
-	print("Scores: ")
-	for i := 0; i < len(scores); i++ {
-		if i == len(scores)-1 {
-			print(scores[i])
-		} else {
-			print(scores[i], ", ")
-		}
-	}
-	// print a new line
-	println()
-
-	indices := utils.SortByScores(scores)
-	fmt.Printf("Indices (of cluster %d): ", clusterIndex)
-	for i := 0; i < len(indices); i++ {
-		if i == len(indices)-1 {
-			print(indices[i])
-		} else {
-			print(indices[i], ", ")
-		}
-	}
-	// print a new line
-	println()
 
 	utils.RemoveTestData()
 }

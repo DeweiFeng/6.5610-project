@@ -165,7 +165,7 @@ func NewUnderhoodClient[T matrix.Elem](h *PIR_hint[T]) *underhood.Client[T] {
 	return underhood.NewClientDistributed[T](h.Seeds, h.Offsets, &h.Info)
 }
 
-func FindDBEnd(indices map[uint64]bool, rowStart, colIndex, M, L, maxLen uint64) uint64 {
+func FindDBEnd(indices map[uint64]uint, rowStart, colIndex, M, L, maxLen uint64) uint64 {
 	rowEnd := rowStart + 1
 	for length := uint64(1); ; length++ {
 		if (maxLen > 0) && (length >= maxLen) {
