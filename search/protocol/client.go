@@ -117,24 +117,21 @@ func (c *Client) ReconstructWithinBin(answer *pir.Answer[matrix.Elem64], cluster
 	res := make([]VectorScore, 0)
 	colIndex := c.ClusterToIndex[uint(clusterIndex)] % c.DBInfo.M
 
-	currStart := uint64(0)
-	for {
-		currCluster, ok := c.IndexToCluster[currStart*c.DBInfo.M+colIndex]
-		if !ok {
-			break
-		}
-		currEnd := utils.FindDBEnd(c.IndexToCluster, currStart, colIndex, c.DBInfo.M, c.DBInfo.L, 0)
+	var currCluster uint
+	var at uint64
 
-		at := 0
-		for j := currStart; j < currEnd; j++ {
-			res = append(res, VectorScore{
-				ClusterID:       currCluster,
-				IDWithinCluster: uint64(at),
-				Score:           utils.SmoothResult(uint64(vals.Get(j, 0)), mod),
-			})
-			at += 1
+	for j := uint64(0); j < c.DBInfo.L; j++ {
+		tempCluster, ok := c.IndexToCluster[j*c.DBInfo.M+colIndex]
+		if ok { // this is a new cluster, we update currCluster and at
+			currCluster = tempCluster
+			at = 0
 		}
-		currStart = currEnd
+		res = append(res, VectorScore{
+			ClusterID:       currCluster,
+			IDWithinCluster: uint64(at),
+			Score:           utils.SmoothResult(uint64(vals.Get(j, 0)), mod),
+		})
+		at += 1
 	}
 
 	sort.Slice(res, func(i, j int) bool {
