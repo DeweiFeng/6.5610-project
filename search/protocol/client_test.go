@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/DeweiFeng/6.5610-project/search/database"
@@ -64,8 +65,7 @@ func TestZeroQuery(t *testing.T) {
 	println()
 
 	indices := utils.SortByScores(scores)
-	// print all indices one by one, in one line
-	print("Indices (of cluster %d): ", clusterIndex)
+	fmt.Printf("Indices (of cluster %d): ", clusterIndex)
 	for i := 0; i < len(indices); i++ {
 		if i == len(indices)-1 {
 			print(indices[i])

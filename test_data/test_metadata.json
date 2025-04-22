@@ -1,0 +1,6 @@
+{
+  "num_vectors": 100,
+  "num_clusters": 5,
+  "dim": 10,
+  "prec_bits": 5
+}

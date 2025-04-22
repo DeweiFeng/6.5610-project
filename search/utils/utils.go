@@ -34,6 +34,17 @@ func StringToUint64(s string) (uint64, error) {
 	return i, err
 }
 
+func StringToInt8(s string) (int8, error) {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, err
+	}
+	if i < -128 || i > 127 {
+		return 0, fmt.Errorf("value out of range for int8: %d", i)
+	}
+	return int8(i), nil
+}
+
 func Clamp(val int, precBits uint64) int8 {
 	min := -int(1 << (precBits - 1))
 	if val <= min {

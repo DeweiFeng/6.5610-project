@@ -1,43 +1,43 @@
+import os
 import sys
 import numpy as np
 from sklearn.cluster import KMeans
 
-def generate_test_files(num_vectors, dim, num_clusters, preamble, precision=5):
+def generate_test_files(num_vectors, dim, num_clusters, preamble, num_queries=10, precision=5):
+    # get the dir of preamble and create it if it does not exist
+    os.makedirs(os.path.dirname(preamble), exist_ok=True)
     all_vectors = np.random.uniform(-1, 1, (num_vectors, dim))
-    np.savetxt(f"{preamble}_all_float.csv", all_vectors, delimiter=",", fmt="%s")
+    queries = np.random.uniform(-1, 1, (num_queries, dim))
 
     kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(all_vectors)
-    cluster_centers = kmeans.cluster_centers_
     clusters = [[] for _ in range(num_clusters)]
     for i in range(num_vectors):
         clusters[kmeans.labels_[i]].append(all_vectors[i])
-    # max_cluster_size = max(len(cluster) for cluster in clusters)
-    # # pad all clusters to max_cluster_size with zeros
-    # for i in range(num_clusters):
-    #     if len(clusters[i]) < max_cluster_size:
-    #         clusters[i].extend([[0] * dim] * (max_cluster_size - len(clusters[i])))
-    clusters = [np.array(cluster) for cluster in clusters]
-    cluster_centers = np.array(cluster_centers)
+
+    # get the cluster ids of all query vectors
+    queries_labels = kmeans.predict(queries)
 
     scale = 1 << precision
-    clusters_int = [np.round(cluster * scale) for cluster in clusters]
-    cluster_centers_int = np.round(cluster_centers * scale)
+    clusters_int = [np.round(np.array(cluster) * scale) for cluster in clusters]
+    queries_int = np.round(queries * scale)
 
     for i in range(num_clusters):
         with open(f"{preamble}_cluster_{i}.csv", "w") as f:
             f.write(f"{len(clusters_int[i])}\n{dim}\n{precision}\n")
             np.savetxt(f, clusters_int[i], delimiter=",", fmt="%d")
         with open(f"{preamble}_cluster_{i}_float.csv", "w") as f:
-            f.write(f"{len(clusters[i])},{dim}\n{precision}\n")
+            f.write(f"{len(clusters[i])}\n{dim}\n{precision}\n")
             np.savetxt(f, clusters[i], delimiter=",", fmt="%s")
     
-    with open(f"{preamble}_centers.csv", "w") as f:
-        f.write(f"{num_clusters}\n{dim}\n{precision}\n")
-        np.savetxt(f, cluster_centers_int, delimiter=",", fmt="%d")
-    
-    with open(f"{preamble}_centers_float.csv", "w") as f:
-        f.write(f"{num_clusters}\n{dim}\n""{precision}\n")
-        np.savetxt(f, cluster_centers, delimiter=",", fmt="%s")
+    # save queries to a csv file, each row is cluster id followed by the query vector
+    with open(f"{preamble}_queries.csv", "w") as f:
+        for i in range(num_queries):
+            f.write(f"{queries_labels[i]},")
+            np.savetxt(f, queries_int[i].reshape(1, -1), delimiter=",", fmt="%d")
+    with open(f"{preamble}_queries_float.csv", "w") as f:
+        for i in range(num_queries):
+            f.write(f"{queries_labels[i]},")
+            np.savetxt(f, queries[i].reshape(1, -1), delimiter=",", fmt="%s")
 
     with open(f"{preamble}_metadata.json", "w") as f:
         f.write("{\n")

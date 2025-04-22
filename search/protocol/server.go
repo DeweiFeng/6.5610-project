@@ -54,21 +54,13 @@ func (s *Server) ProcessVectorsFromClusters(metadata database.Metadata, clusters
 		fmt.Printf("%d < %d\n", s.PIRServer.Params().P, max_inner_prod)
 		panic("Parameters not supported. Inner products may wrap around.")
 	}
-
-	fmt.Println("    done")
 }
-
-// func (s *Server) Answer(query *pir.Query[matrix.Elem64], ans *pir.Answer[matrix.Elem64]) error {
-// 	*ans = *s.PIRServer.Answer(query)
-// 	return nil
-// }
 
 func (s *Server) HintAnswer(ct *[][]byte) *underhood.HintAnswer {
 	offlineAns := s.HintServer.HintAnswer(ct)
 	return offlineAns
 }
 
-// return version of Answer (instead of writing to given ans)
 func (s *Server) Answer(query *pir.Query[matrix.Elem64]) *pir.Answer[matrix.Elem64] {
 	ans := s.PIRServer.Answer(query)
 	return ans
