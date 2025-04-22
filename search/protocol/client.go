@@ -114,7 +114,7 @@ type VectorScore struct {
 
 func (c *Client) ReconstructWithinBin(answer *pir.Answer[matrix.Elem64], clusterIndex uint64, mod uint64) *[]VectorScore {
 	vals := c.UnderhoodClient.RecoverLHE(answer)
-	res := make([]VectorScore, 0)
+	res := make([]VectorScore, c.DBInfo.L)
 	colIndex := c.ClusterToIndex[uint(clusterIndex)] % c.DBInfo.M
 
 	var currCluster uint
@@ -126,11 +126,11 @@ func (c *Client) ReconstructWithinBin(answer *pir.Answer[matrix.Elem64], cluster
 			currCluster = tempCluster
 			at = 0
 		}
-		res = append(res, VectorScore{
+		res[j] = VectorScore{
 			ClusterID:       currCluster,
 			IDWithinCluster: uint64(at),
 			Score:           utils.SmoothResult(uint64(vals.Get(j, 0)), mod),
-		})
+		}
 		at += 1
 	}
 
