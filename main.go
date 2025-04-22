@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/DeweiFeng/6.5610-project/search/database"
 	"github.com/DeweiFeng/6.5610-project/search/protocol"
@@ -22,7 +23,7 @@ func argumentsValidation(preamble string, topk int) {
 	}
 }
 
-func readQueryLine(reader *csv.Reader, dim uint64) (uint64, []int8, bool) {
+func readQueryLine(reader *csv.Reader, dim uint64, precBits uint64) (uint64, []int8, bool) {
 	row, err := reader.Read()
 	if err == io.EOF {
 		return 0, nil, true
@@ -39,7 +40,8 @@ func readQueryLine(reader *csv.Reader, dim uint64) (uint64, []int8, bool) {
 	}
 	query := make([]int8, dim)
 	for i := 0; i < int(dim); i++ {
-		query[i], err = utils.StringToInt8(row[i+1])
+		u, err := strconv.ParseFloat(row[i+1], 64)
+		query[i] = utils.QuantizeClamp(u, precBits)
 		if err != nil {
 			panic("Error converting query to int8: " + err.Error())
 		}
@@ -107,7 +109,7 @@ func main() {
 	defer writer.Flush()
 
 	for {
-		clusterIndex, query, isEnd := readQueryLine(reader, metadata.Dim)
+		clusterIndex, query, isEnd := readQueryLine(reader, metadata.Dim, metadata.PrecBits)
 		if isEnd {
 			break
 		}

@@ -9,6 +9,10 @@ def generate_test_files(num_vectors, dim, num_clusters, preamble, num_queries=10
     all_vectors = np.random.uniform(-1, 1, (num_vectors, dim))
     queries = np.random.uniform(-1, 1, (num_queries, dim))
 
+    # normalize all vectors and queries such that l2 norm is 1, so that cosine similarity is the same as dot product
+    all_vectors = all_vectors / np.linalg.norm(all_vectors, axis=1, keepdims=True)
+    queries = queries / np.linalg.norm(queries, axis=1, keepdims=True)
+
     kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(all_vectors)
     clusters = [[] for _ in range(num_clusters)]
     for i in range(num_vectors):
@@ -17,24 +21,12 @@ def generate_test_files(num_vectors, dim, num_clusters, preamble, num_queries=10
     # get the cluster ids of all query vectors
     queries_labels = kmeans.predict(queries)
 
-    scale = 1 << precision
-    clusters_int = [np.round(np.array(cluster) * scale) for cluster in clusters]
-    queries_int = np.round(queries * scale)
-
     for i in range(num_clusters):
         with open(f"{preamble}_cluster_{i}.csv", "w") as f:
-            f.write(f"{len(clusters_int[i])}\n{dim}\n{precision}\n")
-            np.savetxt(f, clusters_int[i], delimiter=",", fmt="%d")
-        with open(f"{preamble}_cluster_{i}_float.csv", "w") as f:
-            f.write(f"{len(clusters[i])}\n{dim}\n{precision}\n")
             np.savetxt(f, clusters[i], delimiter=",", fmt="%s")
     
     # save queries to a csv file, each row is cluster id followed by the query vector
     with open(f"{preamble}_queries.csv", "w") as f:
-        for i in range(num_queries):
-            f.write(f"{queries_labels[i]},")
-            np.savetxt(f, queries_int[i].reshape(1, -1), delimiter=",", fmt="%d")
-    with open(f"{preamble}_queries_float.csv", "w") as f:
         for i in range(num_queries):
             f.write(f"{queries_labels[i]},")
             np.savetxt(f, queries[i].reshape(1, -1), delimiter=",", fmt="%s")
@@ -43,7 +35,6 @@ def generate_test_files(num_vectors, dim, num_clusters, preamble, num_queries=10
         f.write("{\n")
         f.write(f'  "num_vectors": {num_vectors},\n')
         f.write(f'  "num_clusters": {num_clusters},\n')
-        # f.write(f'  "cluster_size": {max_cluster_size},\n')
         f.write(f'  "dim": {dim},\n')
         f.write(f'  "prec_bits": {precision}\n')
         f.write("}\n")

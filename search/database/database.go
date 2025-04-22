@@ -39,7 +39,7 @@ type Cluster struct {
 	Vectors    []int8
 }
 
-func ReadClusterFromCsv(file string, index uint64) *Cluster {
+func ReadClusterFromCsv(file string, index uint64, dim uint64, precBits uint64) *Cluster {
 	f, err := os.Open(file)
 	if err != nil {
 		fmt.Println(err)
@@ -49,49 +49,36 @@ func ReadClusterFromCsv(file string, index uint64) *Cluster {
 
 	reader := csv.NewReader(f)
 
-	line1, err1 := reader.Read()
-	line2, err2 := reader.Read()
-	line3, err3 := reader.Read()
-	if err1 != nil || err2 != nil || err3 != nil {
-		panic("Error reading headers of CSV file " + file)
-	}
-
-	numVec, err1 := utils.StringToUint64(line1[0])
-	dim, err2 := utils.StringToUint64(line2[0])
-	precBits, err3 := utils.StringToUint64(line3[0])
-	if err1 != nil || err2 != nil || err3 != nil {
-		panic("Error parsing headers of CSV file " + file)
-	}
-
-	vectors := make([]int8, numVec*dim)
-
 	reader.FieldsPerRecord = int(dim)
 
-	for at := uint64(0); ; at++ {
+	vectors := make([]int8, 0)
+	// read line by line, append each line (which is a vector) to vectors
+	numVec := 0
+	for {
 		row, err := reader.Read()
 		if err == io.EOF {
 			break
-		} else if err != nil {
-			fmt.Printf("%s\n", err)
+		}
+		if err != nil {
 			panic("Error reading CSV file " + file)
 		}
-
-		offset := at * dim
-
-		for i := uint64(0); i < dim; i++ {
-			u, err := strconv.Atoi(row[i])
-			vectors[offset+i] = utils.Clamp(u, precBits)
+		for j := 0; j < int(dim); j++ {
+			u, err := strconv.ParseFloat(row[j], 64)
 			if err != nil {
 				panic("Error parsing CSV embeddings" + file)
 			}
+			vectors = append(vectors, utils.QuantizeClamp(u, precBits))
 		}
+		numVec++
 	}
-
+	if len(vectors) != int(numVec)*int(dim) {
+		panic("Error reading CSV file " + file + " -- length of vectors does not match")
+	}
 	return &Cluster{
 		Index:      index,
-		NumVectors: numVec,
-		Dim:        dim,
-		PrecBits:   precBits,
+		NumVectors: uint64(numVec),
+		Dim:        uint64(dim),
+		PrecBits:   uint64(precBits),
 		Vectors:    vectors,
 	}
 }
@@ -176,7 +163,7 @@ func ReadAllClusters(clusterPreamble string) (Metadata, []*Cluster) {
 	for i := uint64(0); i < numClusters; i++ {
 		clusterFile := filepath.Join(dir, fmt.Sprintf("%s_cluster_%d.csv", prefix, i))
 		// clusterNumVec, clusterDim, clusterPrecBits, clusterVec := ReadClusterFromCsv(clusterFile)
-		clusters[i] = ReadClusterFromCsv(clusterFile, i)
+		clusters[i] = ReadClusterFromCsv(clusterFile, i, dim, precBits)
 		cluster_sizes[i] = clusters[i].NumVectors
 		vecCountVeri += clusters[i].NumVectors
 

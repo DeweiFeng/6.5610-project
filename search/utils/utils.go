@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path"
@@ -43,6 +44,12 @@ func StringToInt8(s string) (int8, error) {
 		return 0, fmt.Errorf("value out of range for int8: %d", i)
 	}
 	return int8(i), nil
+}
+
+func QuantizeClamp(val float64, precBits uint64) int8 {
+	scale := 1 << (precBits - 1)
+	quantized := int(math.Round(val * float64(scale)))
+	return Clamp(quantized, precBits)
 }
 
 func Clamp(val int, precBits uint64) int8 {

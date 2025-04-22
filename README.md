@@ -11,10 +11,11 @@ To prepare datasets other than the test data, one should save the following file
 - `<preamble>_metadata.json`
     - contains the metadata of the dataset, including the number of clusters, the number of vectors in each cluster, the dimension of the vectors, and the number of bits used to quantize the vectors
 - `<preamble>_cluster_0.csv`, `<preamble>_cluster_1.csv`, ..., `<preamble>_cluster_<C-1>.csv` for `C` clusters
-    - for each cluster, the first three lines are the number of vectors in that cluster, the dimension of the vectors, and the number of bits used to quantize the vectors
-    - the rest of the lines are the vectors in that cluster, where each line is a vector
+    - each line is a vector of floating-point numbers in that cluster
 - `<preamble>_query.csv` for the query vectors
-    - each line is a query vector, where the first number is the cluster id of the query vector, and the rest of the numbers are the processed query vector itself
+    - each line is a query, where the first number is the cluster id of the query vector, and the rest of the floating-point numbers are the query vector itself
+
+**All vectors must be normalized to have unit l2 norm such that dot product is the same as cosine similarity.**
 
 To run the experiments with the new dataset, one should run the following command:
 ```bash

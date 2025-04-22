@@ -11,7 +11,7 @@ import (
 func TestReadEmbeddingsCsv(t *testing.T) {
 	preamble := utils.GenerateTestData()
 	// Test the ReadEmbeddingsCsv function
-	cluster := ReadClusterFromCsv(preamble+"_cluster_0.csv", 0)
+	cluster := ReadClusterFromCsv(preamble+"_cluster_0.csv", 0, 10, 5)
 
 	fmt.Println("Number of vectors:", cluster.NumVectors)
 	fmt.Println("Dimension:", cluster.Dim)
