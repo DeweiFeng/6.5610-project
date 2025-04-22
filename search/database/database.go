@@ -28,7 +28,6 @@ type Metadata struct {
 	NumVectors  uint64 `json:"num_vectors"`
 	Dim         uint64 `json:"dim"`
 	NumClusters uint64 `json:"num_clusters"`
-	PrecBits    uint64 `json:"prec_bits"`
 }
 
 type Cluster struct {
@@ -130,7 +129,7 @@ func PackClusters(clusters []*Cluster, maxCapacity uint64) ([][]uint, []uint64) 
 	return cols, col_szs
 }
 
-func ReadAllClusters(clusterPreamble string) (Metadata, []*Cluster) {
+func ReadAllClusters(clusterPreamble string, precBits uint64) (Metadata, []*Cluster) {
 	dir := filepath.Dir(clusterPreamble)
 	prefix := filepath.Base(clusterPreamble)
 
@@ -146,7 +145,6 @@ func ReadAllClusters(clusterPreamble string) (Metadata, []*Cluster) {
 	numVectors := metadata.NumVectors
 	numClusters := metadata.NumClusters
 	dim := metadata.Dim
-	precBits := metadata.PrecBits
 
 	// file names of clusters are dir/prefix_cluster_0.csv, ..., until the last cluster (number of clusters is metadata.NumClusters)
 
@@ -183,11 +181,10 @@ func ReadAllClusters(clusterPreamble string) (Metadata, []*Cluster) {
 }
 
 // BuildVectorDatabase creates a PIR database from CSV vector files
-func BuildVectorDatabase(metadata Metadata, clusters []*Cluster, seed *rand.PRGKey, hintSz uint64) (*pir.Database[matrix.Elem64], ClusterMap) {
+func BuildVectorDatabase(metadata Metadata, clusters []*Cluster, seed *rand.PRGKey, hintSz uint64, precBits uint64) (*pir.Database[matrix.Elem64], ClusterMap) {
 
 	numVectors := metadata.NumVectors
 	dim := metadata.Dim
-	precBits := metadata.PrecBits
 
 	l := hintSz * 125
 	logQ := uint64(64)

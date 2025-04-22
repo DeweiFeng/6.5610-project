@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from sklearn.cluster import KMeans
 
-def generate_test_files(num_vectors, dim, num_clusters, preamble, num_queries=10, precision=5):
+def generate_test_files(num_vectors, dim, num_clusters, preamble, num_queries=10):
     # get the dir of preamble and create it if it does not exist
     os.makedirs(os.path.dirname(preamble), exist_ok=True)
     all_vectors = np.random.uniform(-1, 1, (num_vectors, dim))
@@ -36,7 +36,6 @@ def generate_test_files(num_vectors, dim, num_clusters, preamble, num_queries=10
         f.write(f'  "num_vectors": {num_vectors},\n')
         f.write(f'  "num_clusters": {num_clusters},\n')
         f.write(f'  "dim": {dim},\n')
-        f.write(f'  "prec_bits": {precision}\n')
         f.write("}\n")
 
 # if __name__ == "__main__":

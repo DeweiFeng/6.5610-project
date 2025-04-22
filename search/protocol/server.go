@@ -24,17 +24,16 @@ type Server struct {
 	HintServer *underhood.Server[matrix.Elem64]
 }
 
-func (s *Server) ProcessVectorsFromClusters(metadata database.Metadata, clusters []*database.Cluster, hintSz uint64) {
+func (s *Server) ProcessVectorsFromClusters(metadata database.Metadata, clusters []*database.Cluster, hintSz uint64, precBits uint64) {
 	seed := rand.RandomPRGKey()
 
 	numClusters := metadata.NumClusters
 	dim := metadata.Dim
 	numVectors := metadata.NumVectors
-	precBits := metadata.PrecBits
 
 	fmt.Printf("Preprocessing of %d %d-dim %d-bit embeddings organized in %d clusters\n", numVectors, dim, precBits, numClusters)
 
-	db, indexMap := database.BuildVectorDatabase(metadata, clusters, seed, hintSz)
+	db, indexMap := database.BuildVectorDatabase(metadata, clusters, seed, hintSz, precBits)
 	s.PIRServer = pir.NewServerSeed(db, seed)
 
 	s.Hint = new(TiptoeHint)

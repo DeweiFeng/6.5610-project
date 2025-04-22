@@ -29,13 +29,12 @@ func TestReadEmbeddingsCsv(t *testing.T) {
 func TestReadAllClusters(t *testing.T) {
 	preamble := utils.GenerateTestData()
 	// Test the ReadAllClusters function
-	metadata, clusters := ReadAllClusters(preamble)
+	metadata, clusters := ReadAllClusters(preamble, 5)
 
 	fmt.Println("Metadata:")
 	fmt.Println("Number of vectors:", metadata.NumVectors)
 	fmt.Println("Number of clusters:", metadata.NumClusters)
 	fmt.Println("Dimension:", metadata.Dim)
-	fmt.Println("Precision bits:", metadata.PrecBits)
 
 	fmt.Println("Clusters:")
 	for i, cluster := range clusters {
@@ -49,11 +48,11 @@ func TestReadAllClusters(t *testing.T) {
 func TestBuildVectorDatabase(t *testing.T) {
 	preamble := utils.GenerateTestData()
 	// Test the BuildVectorDatabase function
-	metadata, clusters := ReadAllClusters(preamble)
+	metadata, clusters := ReadAllClusters(preamble, 5)
 	seed := rand.RandomPRGKey()
 
 	// Call BuildVectorDatabase with the clusters
 	// hintSz is 900 for text embeddings in Tiptoe, and 500 for image embeddings
-	_, _ = BuildVectorDatabase(metadata, clusters, seed, 900)
+	_, _ = BuildVectorDatabase(metadata, clusters, seed, 900, 5)
 	utils.RemoveTestData()
 }

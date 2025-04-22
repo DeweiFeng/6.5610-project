@@ -10,12 +10,12 @@ import (
 func TestZeroQuery(t *testing.T) {
 	preamble := utils.GenerateTestData()
 	// Test the BuildVectorDatabase function
-	metadata, clusters := database.ReadAllClusters(preamble)
+	metadata, clusters := database.ReadAllClusters(preamble, 5)
 
 	hintSz := uint64(900) // hintSz is 900 for text embeddings in Tiptoe, and 500 for image embeddings
 	// get an empty server
 	s := new(Server)
-	s.ProcessVectorsFromClusters(metadata, clusters, hintSz)
+	s.ProcessVectorsFromClusters(metadata, clusters, hintSz, 5)
 
 	c := new(Client)
 	c.Setup(s.Hint) // get the hint from the server

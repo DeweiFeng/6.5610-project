@@ -49,11 +49,11 @@ func readQueryLine(reader *csv.Reader, dim uint64, precBits uint64) (uint64, []i
 	return clusterIndex, query, false
 }
 
-func writeResults(writer *csv.Writer, clusterIndex uint64, scores *[]protocol.VectorScore, topk int) {
+func writeResults(writer *csv.Writer, clusterIndex uint64, scores *[]protocol.VectorScore, k int) {
 	if len(*scores) == 0 {
 		panic("Error: No scores to write")
 	}
-	numRes := topk
+	numRes := k
 	if numRes > len(*scores) {
 		numRes = len(*scores)
 	}
@@ -70,21 +70,22 @@ func writeResults(writer *csv.Writer, clusterIndex uint64, scores *[]protocol.Ve
 
 func main() {
 	preamble := flag.String("preamble", "", "Preamble to use for the search")
-	topk := flag.Int("topk", 10, "Number of top results to return")
+	topK := flag.Int("topk", 10, "Number of top results to return")
+	precBits := flag.Uint64("precBits", 5, "Number of bits to use for precision")
 	clusterOnly := flag.Bool("clusterOnly", false, "Only return top k among vectors in the specified cluster")
 
 	flag.Parse()
-	argumentsValidation(*preamble, *topk)
+	argumentsValidation(*preamble, *topK)
 
 	fmt.Printf("Preamble: %s\n", *preamble)
-	fmt.Printf("Top K: %d\n", *topk)
+	fmt.Printf("Top K: %d\n", *topK)
 	fmt.Printf("Cluster Only: %t\n", *clusterOnly)
 
-	metadata, clusters := database.ReadAllClusters(*preamble)
+	metadata, clusters := database.ReadAllClusters(*preamble, *precBits)
 	hintSz := uint64(900)
 
 	server := new(protocol.Server)
-	server.ProcessVectorsFromClusters(metadata, clusters, hintSz)
+	server.ProcessVectorsFromClusters(metadata, clusters, hintSz, *precBits)
 
 	client := new(protocol.Client)
 	client.Setup(server.Hint)
@@ -109,12 +110,12 @@ func main() {
 	defer writer.Flush()
 
 	for {
-		clusterIndex, query, isEnd := readQueryLine(reader, metadata.Dim, metadata.PrecBits)
+		clusterIndex, query, isEnd := readQueryLine(reader, metadata.Dim, *precBits)
 		if isEnd {
 			break
 		}
 		sortedScores := runRound(client, server, query, clusterIndex, *clusterOnly)
-		writeResults(writer, clusterIndex, sortedScores, *topk)
+		writeResults(writer, clusterIndex, sortedScores, *topK)
 	}
 }
 
