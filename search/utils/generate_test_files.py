@@ -35,7 +35,7 @@ def generate_test_files(num_vectors, dim, num_clusters, preamble, num_queries=10
         f.write("{\n")
         f.write(f'  "num_vectors": {num_vectors},\n')
         f.write(f'  "num_clusters": {num_clusters},\n')
-        f.write(f'  "dim": {dim},\n')
+        f.write(f'  "dim": {dim}\n')
         f.write("}\n")
 
 # if __name__ == "__main__":

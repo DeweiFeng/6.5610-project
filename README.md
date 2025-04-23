@@ -23,8 +23,6 @@ go run main.go --preamble=<preamble> [--topk=10] [--clusterOnly]
 ```
 where `<preamble>` is the prefix of the dataset files (including the directory).
 
-All vectors should have been quantized as per the `prec_bits` in the metadata file.
+If using without `--clusterOnly` flag, the client will return the top-k vectors of all clusters in the bin which the query vector's cluster belongs to. If with `--clusterOnly` flag, the client will return the top-k vectors of the query vector's cluster only, which is Tiptoe's default behavior. Running without the `--clusterOnly` flag is guaranteed to improve the search recall, because it finds the top-k vectors in a larger set of relevant vectors.
 
-If using without `--clusterOnly` flag, the client will return the top-k vectors of all clusters in the bin which the query vector's cluster belongs to. If with `--clusterOnly` flag, the client will return the top-k vectors of the query vector's cluster only, which is Tiptoe's default behavior. `--clusterOnly` flag is guaranteed to improve the search recall, because it finds the top-k vectors in a larger set of relevant vectors.
-
-After running the above command, one would see a csv file `test_data/test_results.csv` or `test_data/test_results_cluster_only.csv` of `q` lines. For each line, it contains the top-k vectors that the client found for the corresponding query vector. In each row, the vectors come in pairs, where the first number is the cluster id of the vector, and the second number is the index of the vector in that cluster. For example, a row of `0,1,4,0` means that the client returns two vectors, `clusters[0][1]` and `clusters[4][0]`.
+After running the above command, one would see a csv file `test_data/test_results.csv` or `test_data/test_results_cluster_only.csv`. For each line, it contains the top-k vectors that the client found for the corresponding query vector. In each row, the vectors come in pairs, where the first number is the cluster id of the vector, and the second number is the index of the vector within that cluster. For example, a row of `0,1,4,0` means that the client returns two vectors, `clusters[0][1]` and `clusters[4][0]`.
