@@ -122,7 +122,7 @@ func main() {
 
 	serverPreProcessingTime := time.Since(serverPreProcessingStart)
 
-	fmt.Printf("Server database constrction time: %s\n", serverPreProcessingTime)
+	fmt.Printf("%s Server database construction time: %s\n", time.Now().Format("2006/01/02 15:04:05"), serverPreProcessingTime)
 
 	client := new(protocol.Client)
 	client.Setup(server.Hint)
@@ -187,7 +187,7 @@ func main() {
 		queryCount++
 
 		if queryCount%1000 == 0 {
-			fmt.Printf("Processed %d queries\n", queryCount)
+			fmt.Printf("%s Processed %d queries\n", time.Now().Format("2006/01/02 15:04:05"), queryCount)
 		}
 	}
 }
