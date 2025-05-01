@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"math"
 	"os"
@@ -235,4 +237,60 @@ func SortByScores(scores []int) []uint64 {
 	}
 
 	return indices
+}
+
+func MessageSizeBytes(m interface{}) uint64 {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+
+	var err error
+	switch v := m.(type) {
+	// necessary to register the right gob encoders
+	case PIR_hint[matrix.Elem32]:
+		err = enc.Encode(&v)
+	case PIR_hint[matrix.Elem64]:
+		err = enc.Encode(&v)
+	case pir.Query[matrix.Elem32]:
+		err = enc.Encode(&v)
+	case pir.Query[matrix.Elem64]:
+		err = enc.Encode(&v)
+	case pir.Answer[matrix.Elem32]:
+		err = enc.Encode(&v)
+	case pir.Answer[matrix.Elem64]:
+		err = enc.Encode(&v)
+	case map[uint]uint64:
+		err = enc.Encode(&v)
+	case map[uint][]uint64:
+		err = enc.Encode(&v)
+	case underhood.HintQuery:
+		err = enc.Encode(&v)
+	case underhood.HintAnswer:
+		err = enc.Encode(&v)
+	default:
+		err = enc.Encode(&v)
+		//panic("Bad input to message_size_bytes")
+	}
+
+	if err != nil {
+		fmt.Println(err)
+		panic("Should not happen")
+	}
+
+	return uint64(buf.Len())
+}
+
+func MessageSizeMB(m interface{}) float64 {
+	return BytesToMB(MessageSizeBytes(m))
+}
+
+func MessageSizeKB(m interface{}) float64 {
+	return BytesToKB(MessageSizeBytes(m))
+}
+
+func BytesToMB(bytes uint64) float64 {
+	return float64(bytes) / (1024 * 1024)
+}
+
+func BytesToKB(bytes uint64) float64 {
+	return float64(bytes) / 1024
 }
