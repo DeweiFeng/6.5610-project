@@ -197,7 +197,7 @@ func BuildVectorDatabase(metadata Metadata, clusters []*Cluster, seed *rand.PRGK
 	fmt.Printf("DB size is %d -- best possible would be %d\n", l*m, actualSz)
 
 	// Pick SimplePIR params
-	recordLen := 15 // in tiptoe, it's 15 for text embeddings and 17 for image embeddings
+	recordLen := 15
 	p := lwe.NewParamsFixedP(logQ, m, (1 << recordLen))
 	if (p == nil) || (p.P < uint64(1<<precBits)) || (p.Logq != 64) {
 		fmt.Printf("P = %d; LogQ = %d\n", p.P, p.Logq)
