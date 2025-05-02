@@ -15,12 +15,23 @@ import (
 	"github.com/DeweiFeng/6.5610-project/search/utils"
 )
 
-func argumentsValidation(preamble string, topk int) {
+func argumentsValidation(preamble string, topk int, query string) {
 	if preamble == "" {
 		panic("Error: Preamble is required")
 	}
 	if topk <= 0 {
 		panic("Error: topk must be a positive integer")
+	}
+	// query is empty or a csv file
+	if query != "" && filepath.Ext(query) != ".csv" {
+		panic("Error: when specified, query must be a csv file")
+	}
+	// query must be inside the same directory as preamble
+	if query != "" {
+		dir := filepath.Dir(preamble)
+		if filepath.Dir(query) != dir {
+			panic("Error: query must be in the same directory as indicated by preamble")
+		}
 	}
 }
 
@@ -99,14 +110,19 @@ func writeResults(writer *csv.Writer, perfWriter *csv.Writer, scores *[]protocol
 	perfWriter.Flush()
 }
 
-func filesValidation(preamble string) {
+func filesValidation(preamble string, query string) {
 	// we check if preamble_metadata.json is present
 	metadataFile := preamble + "_metadata.json"
 	if _, err := os.Stat(metadataFile); os.IsNotExist(err) {
 		panic("Error: metadata file does not exist: " + metadataFile)
 	}
-	// check if preamble_queries.csv is present
-	queryFile := preamble + "_queries.csv"
+	var queryFile string
+	if query != "" {
+		// check if preamble_query.csv is present
+		queryFile = preamble + "_query.csv"
+	} else {
+		queryFile = query
+	}
 	if _, err := os.Stat(queryFile); os.IsNotExist(err) {
 		panic("Error: query file does not exist: " + queryFile)
 	}
@@ -119,16 +135,18 @@ func filesValidation(preamble string) {
 
 func main() {
 	preamble := flag.String("preamble", "", "Preamble to use for the search")
+	query := flag.String("query", "", "Path to the query file to use for the search")
 	topK := flag.Int("topk", 10, "Number of top results to return")
 	precBits := flag.Uint64("precBits", 5, "Number of bits to use for precision")
 	clusterOnly := flag.Bool("clusterOnly", false, "Only return top k among vectors in the specified cluster")
 
 	flag.Parse()
-	argumentsValidation(*preamble, *topK)
+	argumentsValidation(*preamble, *topK, *query)
 
 	filesValidation(*preamble)
 
 	fmt.Printf("Preamble: %s\n", *preamble)
+	fmt.Printf("Query location: %s\n", *query)
 	fmt.Printf("Top K: %d\n", *topK)
 	fmt.Printf("Cluster Only: %t\n", *clusterOnly)
 
@@ -149,7 +167,13 @@ func main() {
 
 	dir := filepath.Dir(*preamble)
 	prefix := filepath.Base(*preamble)
-	queryFile := utils.OpenFile(filepath.Join(dir, prefix+"_queries.csv"))
+
+	var queryFile *os.File
+	if *query != "" {
+		queryFile = utils.OpenFile(*query)
+	} else {
+		queryFile = utils.OpenFile(filepath.Join(dir, prefix+"_query.csv"))
+	}
 	defer queryFile.Close()
 
 	reader := csv.NewReader(queryFile)
@@ -158,25 +182,38 @@ func main() {
 	if *clusterOnly {
 		outputFileSuffix = "_results_cluster_only.csv"
 	}
-	outputFile, err := os.Create(filepath.Join(dir, prefix+outputFileSuffix))
-	if err != nil {
-		panic("Error creating output file: " + err.Error())
+	var outputFileName string
+	if *query != "" {
+		outputFileName = (*query)[:len(*query)-4] + outputFileSuffix
+	} else {
+		outputFileName = filepath.Join(dir, prefix+outputFileSuffix)
 	}
+	outputFile, err := os.Create(outputFileName)
 	defer outputFile.Close()
 	writer := csv.NewWriter(outputFile)
 	defer writer.Flush()
+
+	fmt.Printf("%s writing vector search results to %s\n", time.Now().Format("2006/01/02 15:04:05"), outputFileName)
 
 	perfFileSuffix := "_perf.csv"
 	if *clusterOnly {
 		perfFileSuffix = "_perf_cluster_only.csv"
 	}
-	perfFile, err := os.Create(filepath.Join(dir, prefix+perfFileSuffix))
+	var perfFileName string
+	if *query != "" {
+		perfFileName = (*query)[:len(*query)-4] + perfFileSuffix
+	} else {
+		perfFileName = filepath.Join(dir, prefix+perfFileSuffix)
+	}
+	perfFile, err := os.Create(perfFileName)
 	if err != nil {
 		panic("Error creating performance output file: " + err.Error())
 	}
 	defer perfFile.Close()
 	perfWriter := csv.NewWriter(perfFile)
 	defer perfWriter.Flush()
+
+	fmt.Printf("%s writing performance statistics to %s\n", time.Now().Format("2006/01/02 15:04:05"), perfFileName)
 
 	// write the header for the perf csv
 	perfHeader := []string{
