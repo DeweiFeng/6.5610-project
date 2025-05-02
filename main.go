@@ -119,9 +119,9 @@ func filesValidation(preamble string, query string) {
 	var queryFile string
 	if query != "" {
 		// check if preamble_query.csv is present
-		queryFile = preamble + "_query.csv"
-	} else {
 		queryFile = query
+	} else {
+		queryFile = preamble + "_query.csv"
 	}
 	if _, err := os.Stat(queryFile); os.IsNotExist(err) {
 		panic("Error: query file does not exist: " + queryFile)
@@ -143,27 +143,12 @@ func main() {
 	flag.Parse()
 	argumentsValidation(*preamble, *topK, *query)
 
-	filesValidation(*preamble)
+	filesValidation(*preamble, *query)
 
 	fmt.Printf("Preamble: %s\n", *preamble)
 	fmt.Printf("Query location: %s\n", *query)
 	fmt.Printf("Top K: %d\n", *topK)
 	fmt.Printf("Cluster Only: %t\n", *clusterOnly)
-
-	// start a timer
-	serverPreProcessingStart := time.Now()
-	metadata, clusters := database.ReadAllClusters(*preamble, *precBits)
-	hintSz := uint64(900)
-
-	server := new(protocol.Server)
-	server.ProcessVectorsFromClusters(metadata, clusters, hintSz, *precBits)
-
-	serverPreProcessingTime := time.Since(serverPreProcessingStart)
-
-	fmt.Printf("%s Server database construction time: %s\n", time.Now().Format("2006/01/02 15:04:05"), serverPreProcessingTime)
-
-	client := new(protocol.Client)
-	client.Setup(server.Hint)
 
 	dir := filepath.Dir(*preamble)
 	prefix := filepath.Base(*preamble)
@@ -232,6 +217,21 @@ func main() {
 		panic("Error writing to performance output file: " + err.Error())
 	}
 	perfWriter.Flush()
+
+	// start a timer
+	serverPreProcessingStart := time.Now()
+	metadata, clusters := database.ReadAllClusters(*preamble, *precBits)
+	hintSz := uint64(900)
+
+	server := new(protocol.Server)
+	server.ProcessVectorsFromClusters(metadata, clusters, hintSz, *precBits)
+
+	serverPreProcessingTime := time.Since(serverPreProcessingStart)
+
+	fmt.Printf("%s Server database construction time: %s\n", time.Now().Format("2006/01/02 15:04:05"), serverPreProcessingTime)
+
+	client := new(protocol.Client)
+	client.Setup(server.Hint)
 
 	queryCount := 0
 	for {
