@@ -82,12 +82,12 @@ func writeResults(writer *csv.Writer, perfWriter *csv.Writer, scores *[]protocol
 	writer.Flush()
 
 	perfLine := []string{
-		fmt.Sprintf("%d", perf.clientHintQueryTime.Milliseconds()),
-		fmt.Sprintf("%d", perf.serverHintAnswerTime.Milliseconds()),
-		fmt.Sprintf("%d", perf.clientHintApplyTime.Milliseconds()),
-		fmt.Sprintf("%d", perf.clientQueryProcessingTime.Milliseconds()),
-		fmt.Sprintf("%d", perf.serverComputeTime.Milliseconds()),
-		fmt.Sprintf("%d", perf.clientReconTime.Milliseconds()),
+		fmt.Sprintf("%g", perf.clientHintQueryTime.Seconds()),
+		fmt.Sprintf("%g", perf.serverHintAnswerTime.Seconds()),
+		fmt.Sprintf("%g", perf.clientHintApplyTime.Seconds()),
+		fmt.Sprintf("%g", perf.clientQueryProcessingTime.Seconds()),
+		fmt.Sprintf("%g", perf.serverComputeTime.Seconds()),
+		fmt.Sprintf("%g", perf.clientReconTime.Seconds()),
 		fmt.Sprintf("%d", perf.hintQuerySize),
 		fmt.Sprintf("%d", perf.hintAnsSize),
 		fmt.Sprintf("%d", perf.querySize),
@@ -99,6 +99,24 @@ func writeResults(writer *csv.Writer, perfWriter *csv.Writer, scores *[]protocol
 	perfWriter.Flush()
 }
 
+func filesValidation(preamble string) {
+	// we check if preamble_metadata.json is present
+	metadataFile := preamble + "_metadata.json"
+	if _, err := os.Stat(metadataFile); os.IsNotExist(err) {
+		panic("Error: metadata file does not exist: " + metadataFile)
+	}
+	// check if preamble_queries.csv is present
+	queryFile := preamble + "_queries.csv"
+	if _, err := os.Stat(queryFile); os.IsNotExist(err) {
+		panic("Error: query file does not exist: " + queryFile)
+	}
+	// check if prefix_cluster_0.csv is present
+	clusterFile := preamble + "_cluster_0.csv"
+	if _, err := os.Stat(clusterFile); os.IsNotExist(err) {
+		panic("Error: cluster file does not exist: " + clusterFile)
+	}
+}
+
 func main() {
 	preamble := flag.String("preamble", "", "Preamble to use for the search")
 	topK := flag.Int("topk", 10, "Number of top results to return")
@@ -107,6 +125,8 @@ func main() {
 
 	flag.Parse()
 	argumentsValidation(*preamble, *topK)
+
+	filesValidation(*preamble)
 
 	fmt.Printf("Preamble: %s\n", *preamble)
 	fmt.Printf("Top K: %d\n", *topK)
@@ -186,7 +206,7 @@ func main() {
 		writeResults(writer, perfWriter, sortedScores, *topK, perf)
 		queryCount++
 
-		if queryCount%1000 == 0 {
+		if queryCount%100 == 0 {
 			fmt.Printf("%s Processed %d queries\n", time.Now().Format("2006/01/02 15:04:05"), queryCount)
 		}
 	}
