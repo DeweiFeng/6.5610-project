@@ -46,9 +46,9 @@ import h5py
 from absl import app, flags
 import time
 from tabulate import tabulate
-from clustering import kmeans, k_random, linearlearner, auxiliary
+from clustering import kmeans, k_random, auxiliary, linearlearner
 from tqdm import tqdm
-
+# from clustering import torch_learner
 
 # names of the algorithms
 AlgorithmRandom = 'random'
@@ -174,57 +174,12 @@ def main(_):
     queries = None
     neighbors = None
 
-    # hdf5 format file
-    if FLAGS.format_file == 'hdf5':
-        dataset = h5py.File(FLAGS.dataset, 'r')
 
-        documents = np.array(dataset[FLAGS.documents_key])
-
-        train_queries = None
-        train_ground_truth = None
-        valid_queries = None
-        valid_ground_truth = None
-        test_queries = None
-        test_ground_truth = None
-
-        # Prepare the dataset
-        if FLAGS.train_queries_key in dataset:
-            train_queries = dataset[FLAGS.train_queries_key]
-            train_ground_truth = dataset[FLAGS.train_neighbors_key]
-            train_ground_truth = train_ground_truth[:, :FLAGS.top_k]
-        if FLAGS.valid_queries_key in dataset:
-            valid_queries = dataset[FLAGS.valid_queries_key]
-            valid_ground_truth = dataset[FLAGS.valid_neighbors_key]
-            valid_ground_truth = valid_ground_truth[:, :FLAGS.top_k]
-        if FLAGS.test_queries_key in dataset:
-            test_queries = dataset[FLAGS.test_queries_key]
-            test_ground_truth = dataset[FLAGS.test_neighbors_key]
-            test_ground_truth = test_ground_truth[:, :FLAGS.top_k]
-
-        queries = []
-        neighbors = []
-        if FLAGS.train_queries_key in dataset:
-            queries.append(train_queries)
-            neighbors.append(train_ground_truth)
-        if FLAGS.valid_queries_key in dataset:
-            queries.append(valid_queries)
-            neighbors.append(valid_ground_truth)
-        if FLAGS.test_queries_key in dataset:
-            queries.append(test_queries)
-            neighbors.append(test_ground_truth)
-
-        neighbors = np.concatenate(neighbors, axis=0) if len(queries) > 1 else neighbors[0]
-        queries = np.concatenate(queries, axis=0) if len(queries) > 1 else queries[0]
-
-        assert len(queries) == len(neighbors)
-
-    # npy format file
-    elif FLAGS.format_file == 'npy':
-        documents = np.load(FLAGS.dataset_docs)
-        queries = np.load(FLAGS.dataset_queries)
-        neighbors = np.load(FLAGS.dataset_neighbors)
+    documents = np.load(FLAGS.dataset_docs)
+    queries = np.load(FLAGS.dataset_queries)
+    neighbors = np.load(FLAGS.dataset_neighbors)
         
-        assert len(queries) == len(neighbors)
+    assert len(queries) == len(neighbors)
 
     # run the clustering algorithm or import the clusters already computed
     print('Running the clustering algorithm or importing the clusters already computed.')
@@ -275,58 +230,118 @@ def main(_):
     y_test = None
     clusters_top_k_test = None
 
-    if FLAGS.format_file == 'hdf5':
-        print("Nothing to do")
-        import sys
-        sys.exit(1)
-        #partitioning = auxiliary.train_test_val(queries, neighbors, size_split=FLAGS.test_split_percent/100)
 
-        #x_train = partitioning[0]
-        #y_train = auxiliary.query_true_label(FLAGS.nclusters, label_clustering, partitioning[1][:, 0])
-        #x_val = partitioning[2]
-        #y_val = auxiliary.query_true_label(FLAGS.nclusters, label_clustering, partitioning[3][:, 0])
-        #x_test = partitioning[4]
-        #y_test = auxiliary.query_true_label(FLAGS.nclusters, label_clustering,  partitioning[5][:, 0])
+    label_data = auxiliary.query_true_label(FLAGS.nclusters, label_clustering, neighbors)
+    # partitioning = auxiliary.train_test_val(queries, label_data, size_split=FLAGS.test_split_percent/100)
+    
+    x_train = queries[:6400]
+    y_train = label_data[:6400]
 
-        #if FLAGS.top_k > 1:
-        #    clusters_top_k = []
-        #    for best_test_neigh in partitioning[5]:
-        #        clusters_top_k.append(label_clustering[best_test_neigh])
-        #    clusters_top_k_test = np.array(clusters_top_k)
+    x_val = queries[6400:8000]
+    y_val = label_data[6400:8000]
 
-    elif FLAGS.format_file == 'npy':
-        label_data = auxiliary.query_true_label(FLAGS.nclusters, label_clustering, neighbors)
-        partitioning = auxiliary.train_test_val(queries, label_data, size_split=FLAGS.test_split_percent/100)
+    x_test = queries[8000:8100]
+    y_test = label_data[8000:8100]
 
-        x_train = partitioning[0]
-        y_train = partitioning[1]
-        x_val = partitioning[2]
-        y_val = partitioning[3]
-        x_test = partitioning[4]
-        y_test = partitioning[5]
-
+    #x_train = partitioning[0]
+    #y_train = partitioning[1]
+    #x_val = partitioning[2]
+    #y_val = partitioning[3]
+    #x_test = partitioning[4]
+    #y_test = partitioning[5]
+    
+    np.save('data/sift/test_queries', x_test)
     np.save(FLAGS.name_dataset + '_' + FLAGS.name_embedding + '_' + FLAGS.algorithm + '_y_test.npy', y_test)
 
-    # training linear-learner
-    print('Linear Learner.')
-    new_centroids = linearlearner.run_linear_learner(x_train=x_train, y_train=y_train,
+    train = True
+    if train:
+        # training linear-learner
+        print('Linear Learner.')
+        new_centroids = linearlearner.run_linear_learner(x_train=x_train, y_train=y_train,
                                                      x_val=x_val, y_val=y_val,
                                                      train_queries=queries,
                                                      n_clusters=FLAGS.nclusters,
                                                      n_epochs=FLAGS.learner_nepochs,
                                                      n_units=FLAGS.learner_nunits)
 
-    print(f'Obtained centroids with shape: {new_centroids.shape}')
+        print(f'Obtained centroids with shape: {new_centroids.shape}')
+    
+        np.save('new_centroids', new_centroids)
 
+    else:
+        new_centroids = np.load("new_centroids.npy")
+    
     # results: baseline
     get_final_results('baseline', centroids, x_test, y_test, FLAGS.top_k, clusters_top_k_test, gpu_flag=True)
-
+    print("baseline")
     # results: linear-learner
     get_final_results('linearlearner', new_centroids, x_test, y_test, FLAGS.top_k, clusters_top_k_test, gpu_flag=True)
 
     end = time.time()
     print(f'Done in {end - start} seconds.')
+    
+    from collections import defaultdict
+    cluster_to_docs = defaultdict(list)
+    reverse_doc_map = {}
+    
+    cluster_assignments = np.load('sift_euclidean_kmeans_label_clustering.npy')
+    doc_vectors = np.load('data/sift/documents.npy')
+    print(cluster_assignments.shape)
+    for doc_id, cluster_id in enumerate(cluster_assignments):
+        cluster_id = int(cluster_id)
+        cluster_to_docs[cluster_id].append(doc_id)
+        reverse_doc_map[doc_id] = (cluster_id, len(cluster_to_docs[cluster_id]) - 1)
 
+
+    import json
+
+    # Save
+    with open('sift_doc_to_cluster_id.json', 'w') as f:
+        json.dump(reverse_doc_map, f)
+
+    # assert len(cluster_to_docs) == 1000
+    assert sum(len(d) for d in cluster_to_docs.values()) == 1000000
+    import os
+
+    for cluster_id, doc_ids in cluster_to_docs.items():
+        vectors_in_cluster = []
+
+        for doc_id in doc_ids:
+            doc_embedding = doc_vectors[doc_id]
+            vectors_in_cluster.append(doc_embedding)
+
+        vectors_in_cluster = np.array(vectors_in_cluster)
+        print(vectors_in_cluster.shape)
+        np.savetxt(f"sift_eval_artifacts/sift_cluster_{cluster_id}.csv", vectors_in_cluster, delimiter=",")
+    
+
+    original_ground_truth = np.load('data/sift/sift-128-euclidean.gtruth.npy')
+    original_ground_truth = original_ground_truth[8000:8100]
+    original_ground_truth = original_ground_truth[:, :10]
+
+    cluster_ground_truth = []
+
+    for doc_ids in original_ground_truth:
+        tuple_ground_truth = []
+        for doc_id in doc_ids:
+            cluster_gt = reverse_doc_map[doc_id]
+            tuple_ground_truth.append(cluster_gt)
+
+        cluster_ground_truth.append(tuple_ground_truth)
+    
+    import csv
+
+    with open('sift_eval_artifacts/sift_ground_truth.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        for row in cluster_ground_truth:
+            flat_row = [item for tup in row for item in tup]
+            writer.writerow(flat_row)
+
+    metadata = {"num_vectors": 1000000, "num_clusters": 5, "dim": 128}
+
+    import json
+    with open('sift_eval_artifacts/sift_metadata.json', 'w') as f:
+        json.dump(metadata, f, indent=4) 
 
 if __name__ == '__main__':
     app.run(main)

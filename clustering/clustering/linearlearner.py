@@ -41,7 +41,8 @@ def nn_linear(k, input_shape, n_units):
     # w/ hidden layer
     else:
         model = models.Sequential()
-        model.add(layers.Dense(n_units, activation=None, use_bias=False, input_shape=input_shape))
+        model.add(layers.Dense(n_units, activation='relu', use_bias=False, input_shape=input_shape))
+        # model.add(layers.Dense(n_units, activation='relu', use_bias=False, input_shape=n_units))
         model.add(layers.Dense(k, activation='softmax', use_bias=False))
         return model
 

@@ -20,6 +20,18 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import torch
 
+def prepare_tiptoe_query_data(query_vectors, cluster_assignments):
+    updated_query_vectors = []
+    for query_id, cluster_id in tqdm(enumerate(cluster_assignments)):
+        query_vector = query_vectors[query_id]
+        cluster_id = int(cluster_id)
+        updated_query_vector = np.insert(query_vector, 0, cluster_id)
+        updated_query_vectors.append(updated_query_vector)
+
+    updated_query_vectors = np.array(updated_query_vectors)
+    
+    fmt = ['%d'] + ['%f'] * (updated_query_vectors.shape[1] - 1)
+    np.savetxt(f"sift_eval_artifacts/sift_query.csv", updated_query_vectors, delimiter=",", fmt=fmt)
 
 def scores_queries_centroids(centroids, x_test, gpu_flag=True):
     """
@@ -31,8 +43,9 @@ def scores_queries_centroids(centroids, x_test, gpu_flag=True):
     :param gpu_flag: Flag that indicates whether to run the code using the GPU (True) or not (False).
     :return: The dot-product between each query and each centroid.
     """
-
+    
     # gpu computation
+    gpu_flag = False
     if gpu_flag:
         dim_iter = x_test.shape[0]
 
@@ -42,14 +55,21 @@ def scores_queries_centroids(centroids, x_test, gpu_flag=True):
 
         results = []
         for i in tqdm(range(dim_iter), leave=False, colour='cyan'):
-            results.append(torch.mv(centroids, x_test[i]).to('cpu').numpy())
+            results.append(torch.mv(centroids.T, x_test[i]).to('cpu').numpy())
         return np.array(results)
     # cpu computation
     else:
-        def score_computation(query, means=centroids):
-            return np.array([np.dot(query, center) for center in means])
-
-        return np.apply_along_axis(score_computation, axis=1, arr=x_test)
+        # def score_computation(query, means=centroids):
+            # scores = np.matmul(x_test, centroids.T)
+            # return np.array([np.dot(query, center) for center in means])
+        
+        if x_test.shape[-1] != centroids.shape[0]:
+            centroids = centroids.T
+        
+        scores = np.dot(x_test, centroids)
+        query_cluster_assignments = np.argmax(scores, axis=1)
+        prepare_tiptoe_query_data(x_test, query_cluster_assignments)
+        return scores
 
 
 def create_vector_distribution(k, pos):
