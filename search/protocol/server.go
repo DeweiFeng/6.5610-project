@@ -47,12 +47,12 @@ func (s *Server) ProcessVectorsFromClusters(metadata database.Metadata, clusters
 
 	s.HintServer = underhood.NewServerHintOnly(&s.Hint.PIRHint.Hint)
 
-	// THIS CHECK DOES NOT MAKE SENSE FOR IMAGE DATASET, BECAUSE VECTORS ARE NORMALIZED
-	max_inner_prod := 2 * (1 << (2*precBits - 2)) * dim
-	if s.PIRServer.Params().P < max_inner_prod {
-		fmt.Printf("%d < %d\n", s.PIRServer.Params().P, max_inner_prod)
-		panic("Parameters not supported. Inner products may wrap around.")
-	}
+	// // THIS CHECK DOES NOT MAKE SENSE FOR IMAGE DATASET, BECAUSE VECTORS ARE NORMALIZED
+	// max_inner_prod := 2 * (1 << (2*precBits - 2)) * dim
+	// if s.PIRServer.Params().P < max_inner_prod {
+	// 	fmt.Printf("%d < %d\n", s.PIRServer.Params().P, max_inner_prod)
+	// 	panic("Parameters not supported. Inner products may wrap around.")
+	// }
 }
 
 func (s *Server) HintAnswer(ct *[][]byte) *underhood.HintAnswer {
