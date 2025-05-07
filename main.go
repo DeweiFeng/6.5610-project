@@ -187,6 +187,9 @@ func main() {
 		outputFileName = filepath.Join(dir, prefix+outputFileSuffix)
 	}
 	outputFile, err := os.Create(outputFileName)
+	if err != nil {
+		panic("Error creating output file: " + err.Error())
+	}
 	defer outputFile.Close()
 	writer := csv.NewWriter(outputFile)
 	defer writer.Flush()
