@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/gob"
 	"flag"
 	"fmt"
 	"io"
@@ -133,6 +134,18 @@ func filesValidation(preamble string, query string) {
 	}
 }
 
+func logHintSize(hint *protocol.TiptoeHint) uint64 {
+	gob.Register(database.Metadata{})
+	total := utils.MessageSizeBytes(hint.Metadata)
+
+	gob.Register(database.ClusterMap{})
+	h := utils.MessageSizeBytes(hint.PIRHint)
+	m := utils.MessageSizeBytes(hint.IndexMap)
+	total += (h + m)
+
+	return total
+}
+
 func main() {
 	preamble := flag.String("preamble", "", "Preamble to use for the search")
 	query := flag.String("query", "", "Path to the query file to use for the search")
@@ -229,6 +242,9 @@ func main() {
 	serverPreProcessingTime := time.Since(serverPreProcessingStart)
 
 	fmt.Printf("%s Server database construction time: %s\n", time.Now().Format("2006/01/02 15:04:05"), serverPreProcessingTime)
+
+	// print server hint size in bytes
+	fmt.Printf("Server hint size: %d bytes\n", logHintSize(server.Hint))
 
 	client := new(protocol.Client)
 	client.Setup(server.Hint)
