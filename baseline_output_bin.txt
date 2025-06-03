@@ -1,0 +1,13 @@
+Preamble: baseline_sift_eval_artifacts/sift
+Query location: 
+Top K: 100
+Cluster Only: false
+2025/05/05 03:59:58 writing vector search results to baseline_sift_eval_artifacts/sift_results.csv
+2025/05/05 03:59:58 writing performance statistics to baseline_sift_eval_artifacts/sift_perf.csv
+Building database with 1000000 128-dim 5-bit vectors, organized in 1000 clusters
+Preprocessing of 1000000 128-dim 5-bit embeddings organized in 1000 clusters
+The longest row has length 851 -- max capacity is 112500
+DB size is 129598848 -- best possible would be 128000000
+DB dimensions: 112499 by 1152
+2025/05/05 04:01:44 Server database construction time: 1m46.255429159s
+2025/05/05 04:06:46 Processed 100 queries

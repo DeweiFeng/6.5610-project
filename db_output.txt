@@ -1,0 +1,13 @@
+Preamble: sift/sift
+Query location: 
+Top K: 10
+Cluster Only: false
+2025/05/03 16:42:26 writing vector search results to sift/sift_results.csv
+2025/05/03 16:42:26 writing performance statistics to sift/sift_perf.csv
+Building database with 1000000 128-dim 5-bit vectors, organized in 1000 clusters
+Preprocessing of 1000000 128-dim 5-bit embeddings organized in 1000 clusters
+The longest row has length 1612 -- max capacity is 112500
+DB size is 129598848 -- best possible would be 128000000
+DB dimensions: 112499 by 1152
+2025/05/03 16:44:11 Server database construction time: 1m45.64149083s
+2025/05/03 16:49:15 Processed 100 queries
