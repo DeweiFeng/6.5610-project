@@ -189,7 +189,7 @@ def main():
     answers = np.zeros((queries.shape[0], args.k), dtype=np.int32)
     
     if args.mode == "learned":
-        query_cluster_ids = np.load('cluster_model/predicted_cluster_ids_reduced.npy')
+        query_cluster_ids = np.load('eval_data/predicted_cluster_ids_reduced.npy')
         for i in range(queries.shape[0]):
             answers[i], cluster_id = index.search_in_cluster(queries[i], query_cluster_ids[i], args.k)
     else:
