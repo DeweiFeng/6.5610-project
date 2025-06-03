@@ -59,8 +59,8 @@ class ClusterSearchIndex:
         self.n = n
         self.dim = dim
         self.n_clusters = np.sqrt(n).astype(int)
-        self.centroids = np.load('baseline_data/centroids.npy')
-        self.I = np.load('baseline_data/cluster_assignments.npy')
+        self.centroids = np.load('eval_data/centroids.npy')
+        self.I = np.load('eval_data/cluster_assignments.npy')
         # self.centroids = np.load('learned_data/centroids_reduced.npy')
         self.I = self.I.flatten()
         # self.centroids = None

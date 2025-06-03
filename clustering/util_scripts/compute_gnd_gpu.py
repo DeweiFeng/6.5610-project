@@ -1,8 +1,9 @@
 import argparse
 import faiss
 import numpy as np
+import os
 
-def main(doc_embeddings_path, query_embeddings_path, output_index_path, 
+def main(doc_embeddings_path, query_embeddings_path, output_gnd_path, 
          output_doc_path, output_query_path, d=384, k=10, gpu_id=1):
     # Load data
     xb = np.load(doc_embeddings_path)
@@ -30,7 +31,7 @@ def main(doc_embeddings_path, query_embeddings_path, output_index_path,
     _, I = gpu_index.search(xq, k)
 
     # Save results
-    np.save(output_index_path, I)
+    np.save(output_gnd_path, I)
     np.save(output_doc_path, xb)
     np.save(output_query_path, xq)
 
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="FAISS GPU Search with Normalized Embeddings")
     parser.add_argument('--doc', type=str, required=True, help='Path to document embeddings (npy)')
     parser.add_argument('--query', type=str, required=True, help='Path to query embeddings (npy)')
-    parser.add_argument('--output_index', type=str, required=True, help='Path to save index result (npy)')
+    parser.add_argument('--output_gnd', type=str, required=True, help='Path to save index result (npy)')
     parser.add_argument('--output_doc', type=str, required=True, help='Path to save normalized document embeddings (npy)')
     parser.add_argument('--output_query', type=str, required=True, help='Path to save normalized query embeddings (npy)')
     parser.add_argument('--dimension', type=int, default=384, help='Dimension of embeddings')
@@ -49,11 +50,13 @@ if __name__ == '__main__':
     
     xb = np.load(args.doc)
     xq = np.load(args.query)
+    
+    os.makedirs('../eval_data', exist_ok=True)
 
     main(
         doc_embeddings_path=args.doc,
         query_embeddings_path=args.query,
-        output_index_path=args.output_index,
+        output_gnd_path=args.output_gnd,
         output_doc_path=args.output_doc,
         output_query_path=args.output_query,
         d=args.dimension,

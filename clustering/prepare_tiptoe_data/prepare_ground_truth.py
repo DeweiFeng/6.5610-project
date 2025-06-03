@@ -1,6 +1,8 @@
+import argparse
 import numpy as np
 import json
 import csv
+import os
 
 def convert_ground_truth(reverse_index_path, ground_truth_array, output_csv_path):
     # Load reverse index mapping
@@ -8,8 +10,6 @@ def convert_ground_truth(reverse_index_path, ground_truth_array, output_csv_path
         reverse_index = json.load(f)
 
     num_queries, top_k = ground_truth_array.shape
-    print(num_queries)
-    print(top_k)
     transformed_data = []
     
     num_queries = 100
@@ -32,12 +32,26 @@ def convert_ground_truth(reverse_index_path, ground_truth_array, output_csv_path
     print(f"Saved transformed ground truth to {output_csv_path}")
 
 
-reverse_index_path = "tiptoe_baseline/reverse_index.json"
-ground_truth_array = np.load("./eval_data/ground_truth_test_k10_reduced.npy")
-convert_ground_truth(reverse_index_path, ground_truth_array, "tiptoe_baseline/msmarco_ground_truth.csv")
+def main(args):
+    reverse_index_path = args.reverse_index_path
+    ground_truth_array = np.load(args.ground_truth_path)
 
-# Example usage:
-# reverse_index_path = "clusters/reverse_index.json"
-# ground_truth_array = np.array([[4, 3, 2, 1, 0, 4, 3, 2, 1, 0]])
-# convert_ground_truth(reverse_index_path, ground_truth_array, "transformed_ground_truth.csv")
+    output_path = "tiptoe_baseline/msmarco_ground_truth.csv"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
+    convert_ground_truth(reverse_index_path, ground_truth_array, output_path)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Convert ground truth using reverse index.")
+
+    parser.add_argument('--reverse_index_path', required=True, help="Path to reverse index JSON file")
+    parser.add_argument('--ground_truth_path', required=True, help="Path to ground truth .npy file")
+
+    args = parser.parse_args()
+    main(args)
+
+
+#ground_truth_array = np.load("./eval_data/ground_truth_1M_k10.npy")
+#convert_ground_truth(reverse_index_path, ground_truth_array, "tiptoe_baseline/msmarco_ground_truth.csv")
+#

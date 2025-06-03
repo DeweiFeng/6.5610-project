@@ -110,4 +110,4 @@ print(f"Epoch {epoch+1}/{NUM_EPOCHS} - Loss: {avg_loss:.4f} - Val Acc: {val_acc:
 
 predicted_cluster_ids = [t.cpu().numpy() for t in predicted_cluster_ids]
 predicted_cluster_ids = np.array(predicted_cluster_ids)
-np.save('predicted_cluster_ids_reduced', predicted_cluster_ids)
+np.save('../eval_data/predicted_cluster_ids_reduced', predicted_cluster_ids)

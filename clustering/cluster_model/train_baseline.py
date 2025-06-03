@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
 
-centroids = np.load('../baseline_data/centroids.npy')
+centroids = np.load('../eval_data/centroids.npy')
 
 test_queries = np.load('../eval_data/query_test_reduced.npy')
 
@@ -15,6 +15,7 @@ for query in test_queries:
     predicted_cluster_ids.append(cluster_id)
 
 predicted_cluster_ids = np.array(predicted_cluster_ids)
-np.save('baseline_predicted_cluster_ids', predicted_cluster_ids)
+np.save('../eval_data/baseline_predicted_cluster_ids', predicted_cluster_ids)
+
 
 

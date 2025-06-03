@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import json
 import os
@@ -36,13 +37,20 @@ def export_cluster_data(cluster_ids, doc_vectors, output_dir="tiptoe_baseline", 
 
     print(f"Saved reverse mapping to {mapping_path}")
 
-cluster_ids = np.load('./baseline_data/cluster_assignments.npy')
-doc_vectors = np.load('./baseline_data/msmarco_doc_embeddings_1M_norm.npy')
 
-export_cluster_data(cluster_ids, doc_vectors)
+# cluster_ids = np.load('./eval_data/cluster_assignments.npy')
+# doc_vectors = np.load('./eval_data/msmarco_doc_embeddings_1M_norm.npy')
 
-# Example usage:
-# cluster_ids = np.array([0, 1, 0, 1, 2])
-# doc_vectors = np.random.rand(5, 300)  # 5 documents, 300-dim vectors
-# export_cluster_data_csv(cluster_ids, doc_vectors)
+def main(args):
+    cluster_ids = np.load(args.cluster_assignments_path)
+    doc_vectors = np.load(args.doc_embeddings_path)
+    export_cluster_data(cluster_ids, doc_vectors)
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Load cluster and document embeddings and export cluster data.")
+
+    parser.add_argument('--cluster_assignments_path', required=True, help="Path to cluster assignments .npy file")
+    parser.add_argument('--doc_embeddings_path', required=True, help="Path to document embeddings .npy file")
+
+    args = parser.parse_args()
+    main(args)
