@@ -11,7 +11,6 @@ def convert_ground_truth(reverse_index_path, ground_truth_array, output_csv_path
 
     num_queries, top_k = ground_truth_array.shape
     transformed_data = []
-    
     num_queries = 100
 
     for i in range(num_queries):
@@ -35,16 +34,15 @@ def convert_ground_truth(reverse_index_path, ground_truth_array, output_csv_path
 def main(args):
     reverse_index_path = args.reverse_index_path
     ground_truth_array = np.load(args.ground_truth_path)
-
-    output_path = "tiptoe_baseline/msmarco_ground_truth.csv"
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
+    
+    output_dir = "tiptoe_" + args.output_dir_suffix
+    output_path = os.path.join(output_dir, "msmarco_ground_truth.csv")
     convert_ground_truth(reverse_index_path, ground_truth_array, output_path)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert ground truth using reverse index.")
-
+    parser.add_argument('--output_dir_suffix', required=True, choices=['baseline', 'baseline_learned', 'graph'])
     parser.add_argument('--reverse_index_path', required=True, help="Path to reverse index JSON file")
     parser.add_argument('--ground_truth_path', required=True, help="Path to ground truth .npy file")
 
@@ -52,6 +50,3 @@ if __name__ == "__main__":
     main(args)
 
 
-#ground_truth_array = np.load("./eval_data/ground_truth_1M_k10.npy")
-#convert_ground_truth(reverse_index_path, ground_truth_array, "tiptoe_baseline/msmarco_ground_truth.csv")
-#

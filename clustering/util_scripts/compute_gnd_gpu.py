@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 def main(doc_embeddings_path, query_embeddings_path, output_gnd_path, 
-         output_doc_path, output_query_path, d=384, k=10, gpu_id=1):
+         output_doc_path, output_query_path, d=384, k=10, gpu_id=5):
     # Load data
     xb = np.load(doc_embeddings_path)
     xq = np.load(query_embeddings_path)
@@ -19,7 +19,7 @@ def main(doc_embeddings_path, query_embeddings_path, output_gnd_path,
 
     # Set up CPU index
     cpu_index = faiss.IndexFlatL2(d)
-
+    
     # Move to GPU
     gpu_res = faiss.StandardGpuResources()
     gpu_index = faiss.index_cpu_to_gpu(gpu_res, gpu_id, cpu_index)
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     parser.add_argument('--output_query', type=str, required=True, help='Path to save normalized query embeddings (npy)')
     parser.add_argument('--dimension', type=int, default=384, help='Dimension of embeddings')
     parser.add_argument('--k', type=int, default=10, help='Number of nearest neighbors to retrieve')
-    parser.add_argument('--gpu', type=int, default=1, help='GPU ID to use')
+    parser.add_argument('--gpu', type=int, default=5, help='GPU ID to use')
 
     args = parser.parse_args()
     

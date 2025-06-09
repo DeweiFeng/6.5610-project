@@ -4,7 +4,7 @@ import json
 import os
 from tqdm import tqdm
 
-def export_cluster_data(cluster_ids, doc_vectors, output_dir="tiptoe_baseline", mapping_filename="reverse_index.json"):
+def export_cluster_data(cluster_ids, doc_vectors, output_dir, mapping_filename="reverse_index.json"):
     os.makedirs(output_dir, exist_ok=True)
 
     # Ensure cluster_ids is a flat 1D array of integers
@@ -38,17 +38,16 @@ def export_cluster_data(cluster_ids, doc_vectors, output_dir="tiptoe_baseline", 
     print(f"Saved reverse mapping to {mapping_path}")
 
 
-# cluster_ids = np.load('./eval_data/cluster_assignments.npy')
-# doc_vectors = np.load('./eval_data/msmarco_doc_embeddings_1M_norm.npy')
-
 def main(args):
     cluster_ids = np.load(args.cluster_assignments_path)
     doc_vectors = np.load(args.doc_embeddings_path)
-    export_cluster_data(cluster_ids, doc_vectors)
+    output_dir = "tiptoe_" + args.output_dir_suffix
+    export_cluster_data(cluster_ids, doc_vectors, output_dir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Load cluster and document embeddings and export cluster data.")
-
+    
+    parser.add_argument('--output_dir_suffix', required=True, choices=['baseline', 'baseline_learned', 'graph'])
     parser.add_argument('--cluster_assignments_path', required=True, help="Path to cluster assignments .npy file")
     parser.add_argument('--doc_embeddings_path', required=True, help="Path to document embeddings .npy file")
 

@@ -1,4 +1,5 @@
 import faiss
+import os
 import time
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix, triu
@@ -64,7 +65,9 @@ def save_csr_to_metis_format_corrected(graph: csr_matrix, filename: str):
 
     # --- Bug Fix End ---
 
-    with open(filename, 'w') as f:
+    file_path = os.path.join('../eval_data', filename)
+
+    with open(file_path, 'w') as f:
         # Write header: num_nodes, num_edges, format_code
         header = f"{num_nodes} {num_edges} 001\n"
         f.write(header)
@@ -101,7 +104,7 @@ if __name__ == "__main__":
 
     # Create a flat L2 index on GPU
     index = faiss.IndexFlatL2(embedding_dim)  # L2 distance
-    gpu_index = faiss.index_cpu_to_gpu(res, 0, index)
+    gpu_index = faiss.index_cpu_to_gpu(res, 1, index)
     gpu_index.add(embeddings)
 
     # Run the kNN search
