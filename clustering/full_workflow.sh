@@ -42,22 +42,8 @@ else
     python3 train_model.py
 fi
 
-# Step 5: Evaluate
-cd ..
-
-python3 search.py \
-	-n 1000000 \
-	-d 384 \
-	-k 10 \
-	-q 1000 \
-	-input ./eval_data/msmarco_doc_embeddings_1M_norm.npy \
-	-query ./eval_data/query_test_reduced.npy \
-	-gnd ./eval_data/ground_truth_test_k10.npy \
-	-mode ${mode} \
-	-report ./msmarco-report.txt
-
-
 # Step 6: Prepare data into tiptoe format
+cd ..
 if [ "${mode}" = "baseline" ]; then
 	output_dir_suffix="baseline"
 elif [ "${mode}" = "learned" ]; then
@@ -79,7 +65,7 @@ python3 prepare_tiptoe_data/prepare_query_data.py \
 
 python3 prepare_tiptoe_data/prepare_ground_truth.py \
        --reverse_index_path tiptoe_baseline/reverse_index.json \
-       --ground_truth_path ./eval_data/ground_truth_test_1M_k10.npy \
+       --ground_truth_path ./eval_data/ground_truth_test_k10.npy \
        --output_dir_suffix ${output_dir_suffix}
 
 python3 prepare_tiptoe_data/prepare_metadata.py \
